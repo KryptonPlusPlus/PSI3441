@@ -1,0 +1,161 @@
+\documentclass{article}
+
+\usepackage[a4paper, top    = 2.0cm, 
+                     bottom = 2.0cm, 
+                     left   = 2.5cm, 
+                     right  = 2.0cm]{geometry}
+
+\usepackage[brazil]{babel}
+\usepackage[T1]{fontenc}
+    \DeclareFontShape{T1}{cmr}{m}{scit}{<->ssub * cmr/m/scsl}{}
+    \DeclareFontShape{T1}{cmr}{bx}{scit}{<->ssub * cmr/bx/scsl}{}
+
+\usepackage{indentfirst}
+\usepackage{float}
+\usepackage{graphicx}
+    \graphicspath{{figures/}}
+    
+\usepackage{amsmath}
+
+\usepackage{url}
+\usepackage{hyperref}
+
+\usepackage{m_template}
+
+\title{PSI3441 - Arquitetura de Sistemas Embarcados}
+\subtitle{Atividade 1}
+\author{Gabriel Ivo Bozi & 14571845}
+
+\begin{document}
+
+\maketitle
+
+\section{Por que os \textit{leds} são \textit{Active Low} (acendem quando se coloca 0 na saída)?}
+
+    Na eletrônica dos microcontroladores, os pinos de saída geralmente possuem uma capacidade consideravelmente maior de drenar corrente para o terra (\textit{current sink}) do que de fornecer corrente a partir da fonte de alimentação (\textit{current source}). 
+    
+    Portanto ligar os \textit{leds} na configuração \textit{Active Low} reduz o estresse elétrico no \textit{chip} e previne danos físicos às portas do microcontrolador. Além disso, essa configuração garante estabilidade, evitando que o \textit{led} pisque ou acenda acidentalmente devido a ruídos no barramento durante o processo de inicialização do sistema, momento em que os pinos frequentemente assumem um estado de alta impedância.
+
+\section{Quais funções você usou para acender e apagar os \textit{leds}?}
+
+    Para configuração e verificação de como os \textit{leds} devem se comportar foram utilizadas as seguintes funções:
+    
+    \begin{description}
+        \item[\texttt{gpio\_pin\_configure\_dt()}] Configura os pinos dos \textit{leds} como saída e define o estado padrão.
+        
+        \item[\texttt{gpio\_is\_ready\_dt()}] Utilizada como etapa de validação de segurança para confirmar se o periférico mapeado está pronto para receber comandos do sistema.
+    \end{description}
+    
+    Para acionamento dos \textit{leds} foram utilizadas as seguintes funções:
+    
+    \begin{description}
+        \item[\texttt{gpio\_pin\_toggle()}] Inverte o nível lógico no pino.
+    
+        \item[\texttt{gpio\_pin\_set\_dt()}] Utilizada para acender e apagar os \textit{leds} de fato, alterando o estado lógico do pino (o valor passado como parâmetro representa o estado lógico desejado para o pino, sendo interpretado conforme a configuração do hardware, por exemplo, \textit{Active Low} ou \textit{Active High}).. 
+    \end{description}
+
+\section{Explique o que é o \textit{Device Tree}}
+    O \textit{DeviceTree} é uma estrutura de dados que descreve o \textit{hardware} da plataforma de forma declarativa. Em vez de utilizar endereços ou identificadores fixos no código, ele permite referenciar periféricos por meio de aliases e propriedades, com isso um pino com uma função especifica, por exemplo o \textit{led}, pode funcionar em diferentes plataformas com arranjos dos pinos diferentes. , e é capaz de descrever propriedades dos pinos, por exemplo a polaridade do \textit{led} já que nessa placa ele é ativo em nível lógico baixo. Além de ser capaz de fazer verificações de segurança e portabilidade em tempo de compilação.
+
+\section{Explique as abstrações feitas pelo Sistema Operacional}
+    Sistemas operacionais de tempo real como o \textit{Zephyr} constroem camadas de abstração de hardware para isolar o desenvolvedor da manipulação direta de registradores e mapeamento da memória por meio do \textit{linker}.
+
+\appendix
+\renewcommand{\thesection}{\arabic{section}}
+\addcontentsline{toc}{section}{Anexos}  
+    
+\newpage
+\part*{\centering Anexos}
+    \section{Código main.c utilizado}
+        \begin{small}
+        \begin{verbatim}
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
+
+#define SLEEP_TIME_MS 500
+
+// Define os LEDs usando Device Tree Alias
+#define LED0_NODE DT_ALIAS(led0) // green
+#define LED1_NODE DT_ALIAS(led1) // blue
+#define LED2_NODE DT_ALIAS(led2) // red
+
+#if DT_NODE_HAS_STATUS(LED0_NODE, okay) || DT_NODE_HAS_STATUS(LED1_NODE, okay) || 
+            DT_NODE_HAS_STATUS(LED2_NODE, okay)
+    static const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
+    static const struct gpio_dt_spec led1 = GPIO_DT_SPEC_GET(LED1_NODE, gpios);
+    static const struct gpio_dt_spec led2 = GPIO_DT_SPEC_GET(LED2_NODE, gpios);    
+#else
+    #error "Unsupported board: leds device tree alias is not defined"
+#endif
+
+// Definição dos estados possíveis para a máquina de estados
+//  red
+//  yellow = green + red
+//  green
+typedef enum 
+{
+    STATE_RED,
+    STATE_YELLOW,
+    STATE_GREEN
+} led_state_t;
+
+void main()
+{
+    // Verifica se os devices estão prontos
+    if (!gpio_is_ready_dt(&led0) || !gpio_is_ready_dt(&led1) || !gpio_is_ready_dt(&led2)) 
+    {
+        printk("Error: One or more leds devices are not ready\n");
+        return;
+    }
+
+    // Configura os 3 pinos como saída e inicia desligados
+    gpio_pin_configure_dt(&led0, GPIO_OUTPUT_INACTIVE);
+    gpio_pin_configure_dt(&led1, GPIO_OUTPUT_INACTIVE);
+    gpio_pin_configure_dt(&led2, GPIO_OUTPUT_INACTIVE);
+
+    printk("leds ready to blink using a state machine\n");
+
+    // Inicializa a máquina de estados no verde
+    led_state_t current_state = STATE_GREEN;
+
+    while (1) 
+    {
+        // Desliga todos os leds
+        gpio_pin_set_dt(&led0, 0);
+        gpio_pin_set_dt(&led1, 0);
+        gpio_pin_set_dt(&led2, 0);
+
+        switch (current_state) 
+        {
+            //
+            case STATE_GREEN: 
+                gpio_pin_set_dt(&led0, 1);
+                current_state = STATE_YELLOW;
+                break;
+
+            case STATE_YELLOW:
+                gpio_pin_set_dt(&led0, 1);
+                gpio_pin_set_dt(&led2, 1);
+                current_state = STATE_RED;
+                break;
+
+            case STATE_RED:
+                gpio_pin_set_dt(&led2, 1);
+                current_state = STATE_GREEN;
+                break;
+        }
+
+        k_msleep(SLEEP_TIME_MS);
+    }
+
+    return;
+}
+        \end{verbatim}
+        \end{small}
+
+    \section{Link do repositório}
+        \url{https://github.com/KryptonPlusPlus/PSI3441/tree/main/atividade_01}
+
+    
+\end{document}
