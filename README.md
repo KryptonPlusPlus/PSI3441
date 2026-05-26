@@ -2,16 +2,16 @@
 
 ---
 
-## Atividade 1 (leds)
+## Atividade 1 (LEDs)
 
 ### Problema:
 
-Fazer um programa para piscar o 3 leds como em um semáforo utilizando uma máquina de estados.
+Fazer um programa para piscar o 3 LEDs como em um semáforo utilizando uma máquina de estados.
 
 ### Perguntas:
 
-1. Por que os leds são _Active Low_ (acendem quando se coloca 0 na saída)? 
-2. Quais funções você usou para acender e apagar os leds?
+1. Por que os LEDs são _Active Low_ (acendem quando se coloca 0 na saída)? 
+2. Quais funções você usou para acender e apagar os LEDs?
 3. Explique o que é o _Device Tree_. 
 4. Explique as abstrações feitas pelo Sistema Operacional.
 
@@ -19,33 +19,34 @@ Fazer um programa para piscar o 3 leds como em um semáforo utilizando uma máqu
 
 ### Problema:
 
-Fazer um programa para que o led da placa FRDM-KL25Z  exiba a cor laranja e seja possível variar a intensidade em tempo real pelo terminal serial (UART).
+Fazer um programa para que o LED da placa FRDM-KL25Z  exiba a cor laranja e seja possível variar a intensidade em tempo real pelo terminal serial (UART).
 
 - **Ajuste de Cor:** Utilize canais de PWM para misturar as cores e obter o **tom laranja**. Ajuste a frequência do sinal para que a oscilação não seja perceptível ao olho humano.
 - **Interatividade via Terminal:** O programa deve solicitar que o usuário digite um valor de **0 a 100** (porcentagem) no console.
-- **Cálculo de Duty Cycle:** O código deve calcular o novo _duty cycle_ dos leds mantendo a proporção da cor laranja, mas alterando a intensidade total conforme o valor digitado.
+- **Cálculo de Duty Cycle:** O código deve calcular o novo _duty cycle_ dos LEDs mantendo a proporção da cor laranja, mas alterando a intensidade total conforme o valor digitado.
 - **Abstração de Hardware:** É obrigatório o uso do **_Device Tree_ (DTS)** e das APIs do Zephyr para acessar os controladores de PWM, evitando o uso de endereços ou pinos fixos (_hardcoded_) no meio do código principal.
 
 ## Atividade 3 (_blink bare metal_)
 
-Escreva um programa para fazer o LED verde piscar com 2 segundo de período usando registradores.
+Desenvolva um programa, utilizando acesso direto aos registradores, para fazer o LED **verde** piscar com período de **2 segundos**.
 
-Sequência do programa:
+Sequência de execução do programa:
 
+```
 1. Habilitar clock da porta B.
 
-2. Configurar Pino 19 (Pin Control Register).
+2. Configurar o registrador de controle do pino 19 (Pin Control Register).
 
-3. Setar a direção do Pino.
+3. Configurar o pino 19 como saída.
 
-4. Habilitar saída.
+4. Acionar a saída do pino 19.
 
-5. Função de espera (função espera dada, `delay_ms(n)`, n em milisegundos).
+5. Executar a função de espera (utilizar a função fornecida: void delay_ms(int n), em que n representa o tempo em milissegundos).
 
-6. Desabilitar saída.
+6. Desacionar a saída do pino 19
 
-7. Função de espera.
+7. Executar novamente a função de espera.
 
-8. Repetir passos 4-7.
-
+8. Repetir continuamente os passos 4 a 7.
+```
 ---
