@@ -6,7 +6,7 @@
 
 ### Problema:
 
-Fazer um programa para piscar o 3 LEDs como em um semáforo utilizando uma máquina de estados.
+Fazer um programa para piscar os **3 LEDs** como em um **semáforo** utilizando uma **máquina de estados**.
 
 ### Perguntas:
 
@@ -19,7 +19,7 @@ Fazer um programa para piscar o 3 LEDs como em um semáforo utilizando uma máqu
 
 ### Problema:
 
-Fazer um programa para que o LED da placa FRDM-KL25Z, exiba a cor laranja e seja possível variar a intensidade em tempo real pelo terminal serial (UART).
+Fazer um programa para que o LED da placa FRDM-KL25Z, exiba a **cor laranja** e seja possível variar a **intensidade** em tempo real pelo **terminal serial** (UART).
 
 - **Ajuste de Cor:** Utilize canais de PWM para misturar as cores e obter o **tom laranja**. Ajuste a frequência do sinal para que a oscilação não seja perceptível ao olho humano.
 - **Interatividade via Terminal:** O programa deve solicitar que o usuário digite um valor de **0 a 100** (porcentagem) no console.
@@ -27,6 +27,8 @@ Fazer um programa para que o LED da placa FRDM-KL25Z, exiba a cor laranja e seja
 - **Abstração de Hardware:** É obrigatório o uso do **_Device Tree_ (DTS)** e das APIs do Zephyr para acessar os controladores de PWM, evitando o uso de endereços ou pinos fixos (_hardcoded_) no meio do código principal.
 
 ## Atividade 3 (_blink bare metal_)
+
+### Problema:
 
 Desenvolva um programa, utilizando acesso direto aos registradores, para fazer o LED **verde** piscar com período de **2 segundos**.
 
@@ -43,7 +45,7 @@ Sequência de execução do programa:
 
 5. Executar a função de espera (utilizar a função fornecida: void delay_ms(int n), em que n representa o tempo em milissegundos).
 
-6. Desacionar a saída do pino 19
+6. Desacionar a saída do pino 19.
 
 7. Executar novamente a função de espera.
 
@@ -51,6 +53,8 @@ Sequência de execução do programa:
 ```
 
 ## Atividade 4 (_adc bare metal_)
+
+### Problema:
 
 Escreva um código em C configurando os registradores da FRDM-KL25Z para realizar as seguintes tarefas:
 1. Efetuar uma aquisição analógica utilizando o conversor A/D (ADC).
