@@ -33,7 +33,7 @@ void delay_ms (int n)
     {
         for (j = 0; j < 7000; j++)
         {
-           __asm("nop");
+           __asm volatile ("nop");
         }
     }
 }
