@@ -68,8 +68,7 @@ int main(void)
     // automaticamente no Zephyr.
     //    Configurar o registrador SIM_SOPT2 (0x40048004) com os 
     // bits (TPMSRC) em "01" (MCGFLLCLK).
-    volatile uint32_t *SIM_SOPT2 = (volatile uint32_t *)0x40048004;
-    *SIM_SOPT2 |= (1 << 24); 
+    SIM->SOPT2 |= SIM_SOPT2_PLLFLLSEL_MASK | SIM_SOPT2_TPMSRC(1);
     // ---
 
     if (!pwm_is_ready_dt(&led_red) || !pwm_is_ready_dt(&led_green)) 
