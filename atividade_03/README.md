@@ -194,12 +194,12 @@ $$
 Sendo obtido um erro de:
 
 $$
-    erro = \frac{1000 - 729}{1000} \cdot 100 \approx 27.1%
+    erro = \frac{1000 - 729}{1000} \cdot 100 \approx 27.1\text{\%}
 $$
 
 Ou seja, para o *clock* de $48 \text{ MHz}$ configurado pelo *Zephyr*, o valor 7000 do laço interno não corresponde a $1\text{ ms}$.
 
-A análise do código *assembly* mostrou que o compilador otimizou os laços utilizando registradores para as variáveis de controle e substituindo o contador crescente interno por um contador regressivo. Considerando a frequência de $48\text{ MHz}$ configurada pelo Zephyr e a quantidade de ciclos estimada para cada instrução, obteve-se um atraso aproximado de $729\text{ ms}$ para a chamada `delay_ms(1000)`. Assim, a constante 7000 utilizada no laço interno não produz um atraso de $1\text{ ms}$ por iteração nesse ambiente de execução, resultando em um erro aproximado de $27.1%$.
+A análise do código *assembly* mostrou que o compilador otimizou os laços utilizando registradores para as variáveis de controle e substituindo o contador crescente interno por um contador regressivo. Considerando a frequência de $48\text{ MHz}$ configurada pelo Zephyr e a quantidade de ciclos estimada para cada instrução, obteve-se um atraso aproximado de $729\text{ ms}$ para a chamada `delay_ms(1000)`. Assim, a constante 7000 utilizada no laço interno não produz um atraso de $1\text{ ms}$ por iteração nesse ambiente de execução, resultando em um erro aproximado de $27.1\text{\%}$.
 
 ---
 
