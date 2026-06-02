@@ -164,19 +164,19 @@ $$
 Sabendo que:
 
 $$
-    f_{cpu} = 48\,MHz
+    f_{cpu} = 48\text{ MHz}
 $$
 
 temos:
 
 $$
-    T_{ciclo} = \frac{1}{f_{cpu}} \approx 2{,}083 \cdot 10^{-8} = 20{,}83\,ns
+    T_{ciclo} = \frac{1}{f_{cpu}} \approx 2.083 \cdot 10^{-8} = 20.83\text{ ns}
 $$
 
 Logo:
 
 $$
-    T_{ite} = 35007 \cdot 20{,}83 \cdot 10^{-9} \approx 0{,}729 \,ms
+    T_{ite} = 35007 \cdot 20.83 \cdot 10^{-9} \approx 0.729 \text{ ms}
 $$
 
 Considerando que o parâmetro n é igual a 1000:
@@ -188,18 +188,18 @@ delay_ms(1000);
 obtém-se:
 
 $$
-    T_{total} = 1000 \cdot  0{,}729 \cdot 10^{-3} = 729\,ms
+    T_{total} = 1000 \cdot  0.729 \cdot 10^{-3} = 729\text{ ms}
 $$
 
 Sendo obtido um erro de:
 
 $$
-    erro = \frac{1000 - 729}{1000} \cdot 100 \approx 27{,}1\%
+    erro = \frac{1000 - 729}{1000} \cdot 100 \approx 27.1%
 $$
 
-Ou seja, para o *clock* de $48\,MHz$ configurado pelo *Zephyr*, o valor 7000 do laço interno não corresponde a $1\,ms$.
+Ou seja, para o *clock* de $48 \text{ MHz}$ configurado pelo *Zephyr*, o valor 7000 do laço interno não corresponde a $1\text{ ms}$.
 
-A análise do código *assembly* mostrou que o compilador otimizou os laços utilizando registradores para as variáveis de controle e substituindo o contador crescente interno por um contador regressivo. Considerando a frequência de $48\,MHz$ configurada pelo Zephyr e a quantidade de ciclos estimada para cada instrução, obteve-se um atraso aproximado de $729\,ms$ para a chamada `delay_ms(1000)`. Assim, a constante 7000 utilizada no laço interno não produz um atraso de $1\,ms$ por iteração nesse ambiente de execução, resultando em um erro aproximado de $27{,}1\%$.
+A análise do código *assembly* mostrou que o compilador otimizou os laços utilizando registradores para as variáveis de controle e substituindo o contador crescente interno por um contador regressivo. Considerando a frequência de $48\text{ MHz}$ configurada pelo Zephyr e a quantidade de ciclos estimada para cada instrução, obteve-se um atraso aproximado de $729\text{ ms}$ para a chamada `delay_ms(1000)`. Assim, a constante 7000 utilizada no laço interno não produz um atraso de $1\text{ ms}$ por iteração nesse ambiente de execução, resultando em um erro aproximado de $27.1%$.
 
 ---
 
