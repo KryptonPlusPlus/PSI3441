@@ -61,3 +61,36 @@ Escreva um código em C configurando os registradores da FRDM-KL25Z para realiza
 2. Acender o LED **azul** quando a tensão medida estiver próxima de **3,3 V**;
 2. Acender o LED **verde** quando a tensão medida estiver próxima de **0 V**.
 ---
+
+## Atividade 5 (Biblioteca para Sensor Ultrassônico)
+
+### Problema:
+O módulo de ultrassom pode ser utilizado para medir distâncias por meio do envio e da recepção de ondas sonoras. Nesta atividade, você deverá desenvolver uma biblioteca para facilitar a utilização desse módulo em projetos futuros.
+
+1. Geração do sinal de Trigger com PWM
+
+    Crie o sinal de `trigger` utilizando um periférico de **PWM**. O sensor requer um pulso de, no mínimo, **10 μs** para iniciar uma medição.
+
+    * Escolha uma frequência e um duty cycle adequados para gerar esse pulso.
+    * Defina também a taxa de atualização das medições, ou seja, quantas vezes por segundo o sensor realizará uma nova medida de distância.
+    * Observe que é possível alterar a fonte de clock do **PWM**. Considere utilizar uma fonte mais lenta (por exemplo, **8 MHz**) para facilitar a geração de períodos maiores entre as medições.
+
+2. Medição da largura de pulso com Input Capture
+
+    Utilizando o recurso de **Input Capture**, desenvolva um programa capaz de medir a largura de um pulso PWM gerado na etapa anterior.
+
+    * Conecte a saída do PWM diretamente à entrada configurada para captura.
+    * Valide o funcionamento comparando o valor medido com a largura de pulso configurada.
+
+3. Medição de distância com o sensor ultrassônico
+
+    Após validar o mecanismo de captura:
+
+    * Conecte o sinal PWM ao pino **Trigger** do módulo de ultrassom.
+    * Utilize o **Input Capture** para medir a duração do pulso presente no pino **Echo**.
+    * A partir do tempo medido, calcule a distância até o objeto utilizando a velocidade do som.
+
+4. Criação de uma biblioteca
+
+    Depois de validar o funcionamento completo do sensor organize o código desenvolvido em uma biblioteca reutilizável.
+---
