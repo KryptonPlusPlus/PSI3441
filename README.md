@@ -97,14 +97,80 @@ O módulo de ultrassom pode ser utilizado para medir distâncias por meio do env
 
 ### Problema:
 
-1. Integre ao projeto os exemplos de ADC, botão com interrupção e acelerômetro:
-2. Crie uma _thread_ para leitura do ADC a cada `500 ms` e exiba os valores na serial.
-3. Crie uma _thread_ para leitura do acelerômetro a cada `1000 ms` e exiba os valores dos eixos X, Y e Z na serial.
-4. Configure o botão utilizando interrupção conforme o tutorial.
-5. A cada pressionamento do botão, alterne entre:
-    - Modo ADC: exibe apenas os valores do ADC.
+Nesta atividade, você deverá integrar diferentes periféricos e utilizar múltiplas threads para executar tarefas concorrentes no sistema.
+
+1. Integre ao projeto os exemplos de leitura do ADC, botão com interrupção e acelerômetro.
+2. Implemente uma _thread _responsável pela leitura do ADC, executando periodicamente a cada `500 ms`. Os valores lidos devem ser enviados para a interface serial.
+3. Implemente uma segunda thread responsável pela leitura do acelerômetro, executando periodicamente a cada `1000 ms`. Os valores dos eixos X, Y e Z devem ser exibidos na interface serial.
+4. Configure o botão utilizando interrupção, conforme apresentado no tutorial.
+5. A cada acionamento do botão, alterne entre os seguintes modos de operação:
+    - Modo ADC: exibe somente os valores lidos pelo ADC.
     - Modo Completo: exibe os valores do ADC e do acelerômetro.
-6. Configure inicialmente as duas _threads_ com a mesma prioridade.
-7. Altere as prioridades das _threads_ e observe o comportamento do sistema e **explique o seu funcionamento**.
+6. Inicialize as duas _threads_ utilizando a mesma prioridade de execução.
+7. Em seguida, modifique as prioridades das threads, observe o comportamento do sistema e descreva os efeitos observados. Explique como o escalonador utiliza as prioridades para determinar a execução das tarefas.
+
+## Atividade 7 (_Shared Resources_)
+
+### Problema 
+
+Esta atividade tem como objetivo explorar o compartilhamento de recursos entre múltiplas threads e a utilização de mecanismos de sincronização para evitar inconsistências e coordenar o acesso a recursos compartilhados.
+
+Será implementado um sistema composto por:
+
+- Uma _thread_ **produtora**, responsável por gerar itens.
+- Uma _thread_ **consumidora**, responsável por processar ou remover itens.
+- Um recurso compartilhado, representado por uma variável denominada `count`.
+
+#### Parte 1 – Sem sincronização
+
+- A _thread_ produtora incrementa o valor de contador a cada `1 segundo`.
+- A _thread_ consumidora decrementa o valor de contador a cada `1,5 segundos`.
+- O recurso compartilhado é representado pela variável contador.
+    - Produção: `count++`
+    - Consumo: `count--`
+- Não utilize mutexes, semáforos, filas ou qualquer outro mecanismo de sincronização.
+
+Execute o programa e responda:
+
+1. O valor de `count` permanece consistente ao longo da execução?
+2. O valor de `count` pode assumir valores inesperados?
+3. O comportamento muda ao alterar os períodos de execução das _threads_?
+4. O comportamento muda ao alterar as prioridades das _threads_?
+5. Quais problemas podem ocorrer quando múltiplas _threads_ acessam simultaneamente um mesmo recurso compartilhado?
+
+#### Parte 2 - Utilizando `Mutex`
+
+Adicione um `mutex` para proteger o acesso à variável `count`.
+
+Execute novamente o programa e responda:
+
+1. O `mutex` eliminou os problemas observados na Parte 1?
+2. O `mutex` garante a consistência do valor de `count`?
+3. Qual recurso está sendo protegido pelo `mutex`?
+4. Qual é a principal função de um `mutex` neste contexto?
+
+#### Parte 3 - Utilizando Semáforos
+
+Modifique o programa para utilizar semáforos.
+
+Considere que:
+
+1. O sistema possui um capacidade máxima de 10 itens.
+2. A _thread_ consumidora só pode consumir quando houver itens disponíveis.
+3. A _thread_ produtora só pode produzir quando houver espaço disponível.
+
+Execute novamente o programa e responda:
+
+1. O número de itens disponíveis pode se tornar negativo?
+2. O número de itens pode ultrapassar a capacidade máxima definida?
+3. Qual problema foi resolvido pelos semáforos que não era resolvido apenas pelo `mutex`?
+4. Qual é a função de cada semáforo utilizado?
+
+### Comparação
+
+1. Qual a diferença entre proteger um recurso compartilhado e controlar sua disponibilidade?
+2. Em qual etapa da atividade o `mutex` foi suficiente?
+3. Em qual etapa os semáforos se mostraram mais adequados?
+4. Em uma aplicação real de produtor-consumidor, quando seria necessário utilizar mutexes, semáforos ou ambos? Justifique.
 
 ---
