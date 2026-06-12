@@ -1,5 +1,11 @@
 ### Análise do programa
 
+O funcionamento se divide em três frentes principais que operam de forma concorrente. A _thread_ do acelerômetro tenta ler os dados dos eixos X, Y e Z e imprimir esses valores no _log_ a cada `1000 ms`, mas ela apenas toma essa ação se o botão pressionado (controlado por um semáforo e uma variável `atomic_t`). Paralelamente, a thread do ADC configura o canal analógico e realiza medições de tensão a cada `500 ms` milissegundos, convertendo o valor bruto para milivolts e imprimindo-o no _log_ de forma independente. O botão atua como o controlador do sistema, ele está configurado para disparar uma interrupção de _hardware_ na borda de descida, ou seja, ao ser pressionado. Quando isso ocorre, o sistema inverte o estado da variável de controle, funcionando como um interruptor liga e desliga para a exibição dos dados do acelerômetro. A função principal do programa apenas inicializa o botão e coloca o sistema em um estado de repouso permanente, deixando o controle total da execução para as _threads_.
+
+Como elas estão no mesmo nível de prioridade, o escalonador as trata de forma igualitária. Uma _thread_ é executada até liberar o processador voluntariamente ao chamar a função de suspensão. Devido aos diferentes tempos de espera, elas raramente competem pela CPU ao mesmo tempo. Se acordarem no exato mesmo instante, a ordem dependerá de qual entrou na fila de prontos primeiro, mas uma não interromperá a outra de forma forçada.
+ 
+Se o código for corrigido para que o acelerômetro tenha prioridade um e o ADC utilize prioridade dois, por exemplo, o cenário muda. Nesse caso, o acelerômetro passa a ter uma prioridade mais alta. Se a _thread_ do ADC estiver no meio de sua execução e a thread do acelerômetro acordar de seu período de espera, o sistema operacional pausará imediatamente o ADC, transferirá a CPU para o processamento do acelerômetro e só a devolverá quando este voltar a dormir. Na prática do código, como ambas as _threads_ realizam operações rápidas e passam a maior parte do tempo ociosas, essa mudança de prioridade não gerará uma diferença perceptível no _log_ de saída. Contudo, caso a função de espera do acelerômetro fosse removida, criando um processamento ininterrupto, a _thread_ do ADC com menor prioridade nunca mais seria executada pelo sistema.
+
 ### Análise do funcionamento
 
 Para analisar o comportamento do escalonador quando tarefas com diferentes prioridades competem pelo processador, foi adicionado um atraso artificial na função `accel_thread_entry()` dentro do laço principal (`while(1)`) da função, conforme mostrado a seguir:
@@ -8,6 +14,8 @@ Para analisar o comportamento do escalonador quando tarefas com diferentes prior
 for(int i = 0; i < 1000000; i++)
     __asm volatile ("nop");
 ```
+
+Poderia ser utilizada a função `k_busy_wait()`.
 
 Dessa forma, o tempo de execução da tarefa do acelerômetro é aumentado, facilitando a observação de trocas de contexto durante os testes. Tornando mais fácil observar as trocas de contexto e as decisões tomadas pelo escalonador durante a execução do sistema.
     
