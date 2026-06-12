@@ -60,7 +60,6 @@ Escreva um código em C configurando os registradores da FRDM-KL25Z para realiza
 1. Efetuar uma aquisição analógica utilizando o conversor A/D (ADC).
 2. Acender o LED **azul** quando a tensão medida estiver próxima de **3,3 V**;
 2. Acender o LED **verde** quando a tensão medida estiver próxima de **0 V**.
----
 
 ## Atividade 5 (Biblioteca para Sensor Ultrassônico)
 
@@ -93,4 +92,19 @@ O módulo de ultrassom pode ser utilizado para medir distâncias por meio do env
 4. Criação de uma biblioteca
 
     Depois de validar o funcionamento completo do sensor organize o código desenvolvido em uma biblioteca reutilizável.
+    
+## Atividade 6 (_Threads_)
+
+### Problema:
+
+1. Integre ao projeto os exemplos de ADC, botão com interrupção e acelerômetro:
+2. Crie uma _thread_ para leitura do ADC a cada `500 ms` e exiba os valores na serial.
+3. Crie uma _thread_ para leitura do acelerômetro a cada `1000 ms` e exiba os valores dos eixos X, Y e Z na serial.
+4. Configure o botão utilizando interrupção conforme o tutorial.
+5. A cada pressionamento do botão, alterne entre:
+    - Modo ADC: exibe apenas os valores do ADC.
+    - Modo Completo: exibe os valores do ADC e do acelerômetro.
+6. Configure inicialmente as duas _threads_ com a mesma prioridade.
+7. Altere as prioridades das _threads_ e observe o comportamento do sistema e **explique o seu funcionamento**.
+
 ---
