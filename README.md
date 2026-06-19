@@ -173,4 +173,60 @@ Execute novamente o programa e responda:
 3. Em qual etapa os semáforos se mostraram mais adequados?
 4. Em uma aplicação real de produtor-consumidor, quando seria necessário utilizar mutexes, semáforos ou ambos? Justifique.
 
+## Atividade 8 (Aquisição de Dados em Tempo Real)
+
+Nesta atividade deverá ser feito:
+
+- Implementar uma aplicação multitarefa utilizando o Zephyr RTOS.
+- Realizar aquisição contínua de dados a partir de um periférico da FRDM-KL25Z.
+- Transmitir e visualizar dados em tempo real em um computador.
+- Implementar e avaliar um filtro FIR para processamento digital de sinais.
+- Medir e analisar o desempenho do sistema sob diferentes cargas de processamento.
+- Investigar limitações relacionadas à comunicação UART e ao sistema de *logging* do Zephyr.
+
+### Problema:
+
+#### Aquisição e Comunicação
+
+1. Escolha uma das seguintes fontes de dados:
+    - [ ] Conversor Analógico-Digital (ADC).
+    - [x] Acelerômetro MMA8451Q.
+2. Desenvolva uma aplicação contendo:
+    - uma *thread* dedicada à aquisição de dados.
+    - uma *thread* dedicada à comunicação dos dados adquiridos.
+3. Registre um *timestamp* para cada amostra adquirida.
+4. Desenvolva um *script* em Python capaz de receber e exibir os dados em tempo real.
+5. Determine a maior taxa de aquisição que o sistema consegue atingir de forma estável.
+7. Calcule a taxa de aquisição efetiva a partir dos *timestamps* registrados.
+ 
+#### Implementação do Filtro FIR
+
+1. Implemente um filtro FIR simples para processamento das amostras adquiridas.
+2. Execute os testes sem o filtro e registre:
+    - taxa de aquisição.
+    - utilização da comunicação.
+    - comportamento geral do sistema.
+3. Repita os testes com o filtro habilitado.
+4. Compare os resultados obtidos nas duas configurações.
+
+#### *Logging* e Comunicação UART
+
+1. Utilize o sistema de *logging* do Zephyr para monitorar a execução da aplicação.
+2. Avalie o comportamento do sistema em diferentes taxas de aquisição.
+3. Investigue a ocorrência de:
+    - perda de mensagens.
+    - atrasos na transmissão.
+    - saturação da UART.
+6. Discuta as limitações observadas na comunicação UART e no sistema de *logging*.
+
+#### Análise
+
+1. Qual foi a maior taxa de aquisição obtida pelo sistema?
+2. Qual foi a taxa de aquisição efetiva após a inclusão do filtro FIR?
+3. Qual foi o impacto do filtro FIR no desempenho do sistema?
+4. O sistema de *logging* conseguiu transmitir todas as mensagens geradas?
+5. Em quais condições ocorreu perda de mensagens?
+6. O principal gargalo do sistema foi o processamento dos dados ou a comunicação? Justifique.
+7. Qual configuração apresentou o melhor equilíbrio entre taxa de aquisição, qualidade do sinal e utilização dos recursos do sistema?
+
 ---
