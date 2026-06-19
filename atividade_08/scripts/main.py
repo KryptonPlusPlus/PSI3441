@@ -32,7 +32,7 @@ def serial_read_thread(port, baud):
     global last_x, last_y, last_z
 
     try:
-        ser = serial.Serial(port, baud, timeout = 0.01)
+        ser = serial.Serial(port, baud, timeout = 0.1)
         print(f"Conectado a {port} a {baud} bps.")
         
         # Formato: 2s (header de 2 bytes), q (int64), e seis 'i' (int32)
@@ -42,12 +42,14 @@ def serial_read_thread(port, baud):
         
         while True:
             ser.read_until(b'$A')
+
             # lê o restante do pacote (32 bytes restantes)
             data = ser.read(PACKET_SIZE)
-                    
+
             if len(data) == (PACKET_SIZE):
+
                 ts, x1, x2, y1, y2, z1, z2 = struct.unpack(PACKET_FORMAT, data)
-                        
+                
                 # Reconstrói a precisão respeitando o sinal do val2
                 x = x1 + (x2 / 1000000.0) if x1 >= 0 else x1 - (abs(x2) / 1000000.0)
                 y = y1 + (y2 / 1000000.0) if y1 >= 0 else y1 - (abs(y2) / 1000000.0)
@@ -59,15 +61,15 @@ def serial_read_thread(port, baud):
                 data_queues['y'].append(y)
                 data_queues['z'].append(z)
                         
-                # --- Cálculo da Taxa UART (Computador) ---
+                # --- 1. Cálculo da Taxa UART (Computador) ---
                 stats['count'] += 1
                 now = time.time()
                 if now - stats['last_time'] >= 1.0:
-                    stats['rate']      = stats['count'] / (now - stats['last_time'])
-                    stats['count']     = 0
+                    stats['rate'] = stats['count'] / (now - stats['last_time'])
+                    stats['count'] = 0
                     stats['last_time'] = now
 
-                # --- Cálculo da Taxa Real do Sensor (Placa) ---
+                # --- 2. Cálculo da Taxa Real do Sensor (Placa) ---
                 if (x != last_x) or (y != last_y) or (z != last_z):
                     stats['unique_count'] += 1
                     last_x, last_y, last_z = x, y, z
@@ -77,15 +79,19 @@ def serial_read_thread(port, baud):
 
                 delta_ms = ts - stats['last_ts']
                 if delta_ms >= 1000: # Passou 1 segundo no relógio da placa
-                    stats['sensor_rate']  = stats['unique_count'] / (delta_ms / 1000.0)
+                    stats['sensor_rate'] = stats['unique_count'] / (delta_ms / 1000.0)
                     stats['unique_count'] = 0
-                    stats['last_ts']      = ts
+                    stats['last_ts'] = ts
     except Exception as e:
         print(f"Erro na porta serial: {e}")
         sys.exit()
 
 # --- Configuração do Gráfico ---
-fig, ax = plt.subplots(figsize = (10, 6))
+fig, (ax, ax_fft) = plt.subplots(
+    2, 1,
+    figsize=(10, 8),
+    gridspec_kw={'height_ratios': [2, 1]}
+)
 ax.set_title("Aquisição de Dados Acelerômetro (X, Y, Z)")
 ax.set_xlabel("tempo [ms]")
 ax.set_ylabel("Valor")
@@ -97,17 +103,50 @@ line_y, = ax.plot([], [], lw = 1, label = 'Y', color = 'green', alpha = 0.7)
 line_z, = ax.plot([], [], lw = 1, label = 'Z', color = 'blue',  alpha = 0.7)
 ax.legend(loc = 'upper right')
 
+ax_fft.set_xlabel("Frequência [Hz]")
+ax_fft.set_ylabel("Magnitude")
+ax_fft.grid(True)
+
+line_fft, = ax_fft.plot([], [], color='purple', lw=1)
+
 text_rate = ax.text(0.02, 0.85, '', transform=ax.transAxes, bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
 def update_plot(frame):
     if len(data_queues['ts']) == 0:
-        return line_x, line_y, line_z, text_rate
+        return line_x, line_y, line_z, line_fft, text_rate
 
     ts_arr = np.array(data_queues['ts'])
     x_arr  = np.array(data_queues['x'])
     y_arr  = np.array(data_queues['y'])
     z_arr  = np.array(data_queues['z'])
     
+    # FFT do eixo X
+    if len(x_arr) > 32:
+        # Estima taxa de amostragem pelo timestamp da placa
+        dt = np.mean(np.diff(ts_arr)) / 1000.0  # ms -> s
+
+        if dt > 0:
+            fs = 1.0 / dt
+
+            # Remove componente DC
+            x_centered = x_arr - np.mean(x_arr)
+
+            # Janela de Hanning reduz leakage
+            window = np.hanning(len(x_centered))
+            x_windowed = x_centered * window
+
+            fft_vals = np.fft.rfft(x_windowed)
+            fft_freqs = np.fft.rfftfreq(len(x_windowed), d=dt)
+
+            fft_mag = np.abs(fft_vals)
+
+            line_fft.set_data(fft_freqs, fft_mag)
+
+            ax_fft.set_xlim(0, fs / 2)
+
+            max_mag = np.max(fft_mag)
+            ax_fft.set_ylim(0, max_mag * 1.1 if max_mag > 0 else 1)
+
     line_x.set_data(ts_arr, x_arr)
     line_y.set_data(ts_arr, y_arr)
     line_z.set_data(ts_arr, z_arr)
@@ -124,11 +163,11 @@ def update_plot(frame):
         f"Taxa Real Sensor (Únicos): {stats['sensor_rate']:.2f} Hz"
     )
     
-    return line_x, line_y, line_z, text_rate
+    return line_x, line_y, line_z, line_fft, text_rate
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--port', default='/dev/ttyACM0')
+    parser.add_argument('-p', '--port', default = 'COM1')
     parser.add_argument('-b', '--baud', default = 115200, type = int)
     args = parser.parse_args()
 

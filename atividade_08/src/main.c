@@ -9,11 +9,11 @@
 
 #include <zephyr/logging/log.h>
 
+#include "filter.h"
+
 // --- log ---
 LOG_MODULE_REGISTER(app, LOG_LEVEL_ERR);
 // ---
-
-K_SEM_DEFINE(data_ready_sem, 0, 1);
 
 // --- accel ---
 #define ACCEL_NODE DT_ALIAS(accel0)
@@ -32,12 +32,8 @@ struct __attribute__((packed)) data_packet_t
     int32_t z_val2;      // 4 bytes
 }; // Total: 2 + 8 + (6 * 4) = 34 bytes
 
-void accel_trigger_handler(const struct device *dev, const struct sensor_trigger *trig)
-{
-    k_sem_give(&data_ready_sem);
-}
-
 K_MSGQ_DEFINE(packet, sizeof(struct data_packet_t), 10, 4);
+K_TIMER_DEFINE(sample_timer, NULL, NULL);
 
 void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
 {
@@ -48,7 +44,7 @@ void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
     }
 
     struct sensor_value odr_attr;
-    odr_attr.val1 = 400; // 400 Hz
+    odr_attr.val1 = 800; // 400 Hz
     odr_attr.val2 = 0;
 
     int ret = sensor_attr_set(accel_dev, SENSOR_CHAN_ALL, SENSOR_ATTR_SAMPLING_FREQUENCY, &odr_attr);
@@ -58,22 +54,14 @@ void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
         return;
     }
 
-    struct sensor_trigger trig = 
-    {
-        .type = SENSOR_TRIG_DATA_READY,
-        .chan = SENSOR_CHAN_ACCEL_XYZ,
-    };
-
-    if (sensor_trigger_set(accel_dev, &trig, accel_trigger_handler) < 0) 
-    {
-        LOG_ERR("Erro ao configurar o trigger do sensor.");
-        return;
-    }
-
     struct sensor_value data[3];
 
+    k_timer_start(&sample_timer, K_NO_WAIT, K_USEC(1250));
+
     while(1)
-    {
+    {   
+        k_timer_status_sync(&sample_timer);
+
         LOG_DBG("[%s] inicio sensor_sample_fetch", k_thread_name_get(k_current_get()));
         int ret = sensor_sample_fetch(accel_dev);
         LOG_DBG("[%s] fim sensor_sample_fetch", k_thread_name_get(k_current_get()));
@@ -84,8 +72,6 @@ void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
         }
         else
         {
-            k_sem_take(&data_ready_sem, K_FOREVER);
-            
             ret = sensor_channel_get(accel_dev, SENSOR_CHAN_ACCEL_XYZ, data);
             if (ret) 
                 LOG_ERR("Erro lendo canais: %d", ret);
@@ -95,6 +81,8 @@ void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
                     data[1].val1, abs(data[1].val2),
                     data[2].val1, abs(data[2].val2));
             
+            data[0] = filter_fir(coef, data[0]);
+
             struct data_packet_t data_packet = {
                 .header = {'$', 'A'},
                 .ts = k_uptime_get(),
@@ -113,10 +101,6 @@ void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
                 k_msgq_put(&packet, &data_packet, K_NO_WAIT);
             }
         }
-
-        //LOG_DBG("[%s] dormiu", k_thread_name_get(k_current_get()));
-        //k_sleep(K_TICKS(1));
-        //LOG_DBG("[%s] acordou", k_thread_name_get(k_current_get()));
     }
 }
 // ---
