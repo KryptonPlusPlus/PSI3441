@@ -17,3 +17,6 @@ build/
 
 # python
 .venv
+
+# sphinx
+.build
