@@ -23,6 +23,7 @@ static const struct device *const accel_dev = DEVICE_DT_GET(ACCEL_NODE);
 struct __attribute__((packed)) data_packet_t
 {
     uint8_t header[2];   // Marcador de início: '$' e 'A' (0x24, 0x41)
+    uint32_t sequence;   // 4 bytes
     int64_t ts;          // 8 bytes
     int32_t x_val1;      // 4 bytes
     int32_t x_val2;      // 4 bytes
@@ -30,7 +31,7 @@ struct __attribute__((packed)) data_packet_t
     int32_t y_val2;      // 4 bytes
     int32_t z_val1;      // 4 bytes
     int32_t z_val2;      // 4 bytes
-}; // Total: 2 + 8 + (6 * 4) = 34 bytes
+}; // Total: 2 + 4 + 8 + (6 * 4) = 38 bytes
 
 K_MSGQ_DEFINE(packet, sizeof(struct data_packet_t), 10, 4);
 K_TIMER_DEFINE(sample_timer, NULL, NULL);
@@ -44,11 +45,11 @@ void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
     }
 
     struct sensor_value odr_attr;
-    odr_attr.val1 = 800; // 400 Hz
+    odr_attr.val1 = 400; // 400 Hz
     odr_attr.val2 = 0;
 
     int ret = sensor_attr_set(accel_dev, SENSOR_CHAN_ALL, SENSOR_ATTR_SAMPLING_FREQUENCY, &odr_attr);
-    if (ret != 0)
+    if (ret < 0)
     {
         LOG_ERR("Erro ao configurar ODR: %d", ret);
         return;
@@ -57,6 +58,7 @@ void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
     struct sensor_value data[3];
 
     k_timer_start(&sample_timer, K_NO_WAIT, K_USEC(1250));
+    uint32_t packet_counter = 0;
 
     while(1)
     {   
@@ -81,10 +83,11 @@ void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
                     data[1].val1, abs(data[1].val2),
                     data[2].val1, abs(data[2].val2));
             
-            data[0] = filter_fir(coef, data[0]);
+            data[0] = filter_fir(fir_coeffs, data[0]);
 
             struct data_packet_t data_packet = {
                 .header = {'$', 'A'},
+                .sequence = packet_counter++,
                 .ts = k_uptime_get(),
                 .x_val1 = data[0].val1,
                 .x_val2 = data[0].val2,
