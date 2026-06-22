@@ -36,8 +36,14 @@ struct __attribute__((packed)) data_packet_t
 K_MSGQ_DEFINE(packet, sizeof(struct data_packet_t), 10, 4);
 K_TIMER_DEFINE(sample_timer, NULL, NULL);
 
+static struct fir_t filter[3];
+
 void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
 {
+    filter_fir_init(&filter[0]);
+    filter_fir_init(&filter[1]);
+    filter_fir_init(&filter[2]);
+
     if (!device_is_ready(accel_dev)) 
     {
         LOG_ERR("Acelerômetro não está pronto.");
@@ -45,7 +51,7 @@ void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
     }
 
     struct sensor_value odr_attr;
-    odr_attr.val1 = 400; // 400 Hz
+    odr_attr.val1 = 800; // 400 Hz
     odr_attr.val2 = 0;
 
     int ret = sensor_attr_set(accel_dev, SENSOR_CHAN_ALL, SENSOR_ATTR_SAMPLING_FREQUENCY, &odr_attr);
@@ -83,7 +89,9 @@ void accel_thread_data_acquisition(void *arg0, void *arg1, void *arg2)
                     data[1].val1, abs(data[1].val2),
                     data[2].val1, abs(data[2].val2));
             
-            data[0] = filter_fir(fir_coeffs, data[0]);
+            data[0] = filter_fir(&filter[0], fir_coeffs, data[0]); //
+            data[1] = filter_fir(&filter[1], fir_coeffs, data[1]); //
+            data[2] = filter_fir(&filter[2], fir_coeffs, data[2]); // aplica o filtro nos 3 eixos
 
             struct data_packet_t data_packet = {
                 .header = {'$', 'A'},
